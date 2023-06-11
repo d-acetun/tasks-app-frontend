@@ -1,4 +1,9 @@
-import { createTask, getAllTasks, updateTask, deleteTask } from "./db.js";
+import {
+  createTask,
+  getAllTasks,
+  updateTask,
+  deleteTask,
+} from "./tasks-service.js";
 
 let tasks = [];
 const form = document.getElementById("form");
@@ -6,33 +11,15 @@ const tasksList = document.getElementById("tasksList");
 
 // window.updateTask = updateTask;
 
-const getInitData = async () => {
+const getTasks = async () => {
   tasks = await getAllTasks();
   createCards();
 };
 
 // Llamar a la función fetchData al cargar la página
-window.addEventListener("load", getInitData);
-
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const {
-    inputTitle: { value: title },
-    inputDescription: { value: description },
-  } = form;
-
-  try {
-    const newTask = await createTask({ title, description });
-    console.log("newTask", newTask);
-    tasks.push(newTask);
-    createCards();
-  } catch (e) {
-    console.log(e);
-  }
-});
+window.addEventListener("load", getTasks);
 
 const createCards = () => {
-  // console.log("tasks", tasks);
   tasksList.innerHTML = "";
   tasks.forEach((task) => {
     const { title, description, done, id } = task;
@@ -51,6 +38,24 @@ const createCards = () => {
   });
   addButtonsListener();
 };
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const {
+    inputTitle: { value: title },
+    inputDescription: { value: description },
+  } = form;
+
+  try {
+    await createTask({ title, description });
+    form.inputTitle.value = "";
+    form.inputDescription.value = "";
+    getTasks();
+  } catch (e) {
+    console.log(e);
+  }
+});
+
 const addButtonsListener = () => {
   const editButtons = document.querySelectorAll(".edit-button");
   const deleteButtons = document.querySelectorAll(".delete-button");
@@ -60,7 +65,6 @@ const addButtonsListener = () => {
     button.addEventListener("click", async () => {
       const { taskId } = button.dataset;
       const task = tasks.find((task) => task.id === Number(taskId));
-      console.log("task", task);
       const { title, description } = task;
       const newTitle = prompt("New title", title);
       if (!newTitle) return alert("Update canceled");
@@ -106,7 +110,6 @@ const addButtonsListener = () => {
         return task;
       });
       tasks = updatedTasks;
-      // alert("Task updated");
       createCards();
     });
   });
